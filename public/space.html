@@ -9,6 +9,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;background:#00000d;font-family:'Rajdhani',sans-serif;color:#e2e8f0}
 canvas{display:block;position:fixed;inset:0;z-index:0}
+#cv{touch-action:none}
 body{cursor:none}
 #cx{position:fixed;pointer-events:none;z-index:9999;transform:translate(-50%,-50%)}
 #cx::before{content:'';display:block;width:4px;height:4px;background:#22d3ee;border-radius:50%}
@@ -202,6 +203,8 @@ const PROJS=[
 
 const cv=document.getElementById('cv');
 const W=()=>innerWidth,H=()=>innerHeight;
+// Mobile: prevent double-tap zoom / browser gestures on the WebGL canvas
+cv.style.touchAction='none';
 const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2.5));
 renderer.setSize(W(),H());
@@ -346,9 +349,8 @@ function clearFocus(){focusOn=false;focusIdx=null;focusEl.classList.remove('on')
 
 window.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMod();clearFocus();}}, { passive:true });
 
-window.addEventListener('click',e=>{
-  if(e.target!==cv)return;
-  const h=castRay(e.clientX,e.clientY);
+function handleSelectAt(x,y){
+  const h=castRay(x,y);
   if(h==='sun'){toggleMC();return;}
   if(typeof h==='number'){
     if(focusOn && focusIdx===h && !traveling){openMod(PROJS[h]);return;}
@@ -360,7 +362,24 @@ window.addEventListener('click',e=>{
     return;
   }
   if(focusOn && !traveling){clearFocus();}
-});
+}
+
+// Mobile-friendly tap detection: treat a short, low-move pointer gesture as a tap.
+let pd=false,pdx=0,pdy=0,pdt=0;
+cv.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='mouse' && e.button!==0) return;
+  pd=true;pdx=e.clientX;pdy=e.clientY;pdt=performance.now();
+}, { passive:true });
+cv.addEventListener('pointerup',e=>{
+  if(!pd) return; pd=false;
+  const dx=e.clientX-pdx,dy=e.clientY-pdy;
+  const dist=Math.hypot(dx,dy);
+  const dur=performance.now()-pdt;
+  if(dist<10 && dur<650) handleSelectAt(e.clientX,e.clientY);
+}, { passive:true });
+
+// Desktop fallback (some browsers still prefer click semantics)
+window.addEventListener('click',e=>{ if(e.target===cv) handleSelectAt(e.clientX,e.clientY); }, { passive:true });
 window.addEventListener('mousemove',e=>{document.getElementById('cx').style.cssText+=`;left:${e.clientX}px;top:${e.clientY}px`;document.getElementById('cx-ring').style.cssText+=`;left:${e.clientX}px;top:${e.clientY}px`;tip.style.left=e.clientX+'px';tip.style.top=e.clientY+'px';const h=castRay(e.clientX,e.clientY);if(h==='sun'){tip.textContent='SAGAR — AI Engineer · Click to view profile';tip.style.opacity='1';document.getElementById('cx-ring').classList.add('h');}else if(typeof h==='number'){tip.textContent=PROJS[h].title+' — Click to launch rocket';tip.style.opacity='1';document.getElementById('cx-ring').classList.add('h');}else{tip.style.opacity='0';document.getElementById('cx-ring').classList.remove('h');}});
 
 function toggleLink(el,url){if(!url){el.style.display='none';return;}el.style.display='inline-flex';el.setAttribute('href',url);}
