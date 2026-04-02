@@ -11,12 +11,6 @@ A premium dual-experience portfolio:
 - Main site: https://portfolio-two-sooty-v03zrt87zk.vercel.app
 - Space Mode (direct): https://portfolio-two-sooty-v03zrt87zk.vercel.app/space.html
 
-## Preview (GIF)
-
-Add a preview GIF at `public/preview.gif`, then uncomment the image line below.
-
-<!-- ![Portfolio Preview](public/preview.gif) -->
-
 ## Features
 
 - Mode gate (Simple vs Space).
