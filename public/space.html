@@ -92,6 +92,8 @@ body{cursor:none}
 .pi-tags{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.9rem}
 .pi-link{flex:1;padding:.5rem .7rem;text-align:center;border-radius:8px;text-decoration:none;font-family:'Orbitron',sans-serif;font-size:.5rem;letter-spacing:.1em;transition:all .3s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;border:1px solid rgba(255,255,255,.12);color:#e2e8f0}
 .pi-links{display:flex;gap:.5rem}
+.pi-links + .pi-links{margin-top:.55rem}
+button.pi-link{background:transparent;cursor:pointer}
 #mod{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:400;opacity:0;pointer-events:none;transition:opacity .4s;background:rgba(0,0,8,.65);backdrop-filter:blur(10px)}
 #mod.on{opacity:1;pointer-events:all}
 .mcard{background:linear-gradient(150deg,rgba(4,5,20,.98),rgba(12,5,32,.98));border:1px solid rgba(139,92,246,.18);border-radius:18px;padding:2.4rem;max-width:490px;width:92%;position:relative;box-shadow:0 0 120px rgba(139,92,246,.1),0 50px 100px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.04);transform:scale(.95) translateY(10px);transition:transform .4s cubic-bezier(.23,1,.32,1)}
@@ -171,6 +173,9 @@ body{cursor:none}
   <div class="pi-links">
     <a id="pidemo" class="pi-link" target="_blank" rel="noreferrer">LIVE DEMO</a>
     <a id="pigithub" class="pi-link" target="_blank" rel="noreferrer">GITHUB</a>
+  </div>
+  <div class="pi-links">
+    <button id="pinext" class="pi-link" type="button">NEXT PROJECT</button>
   </div>
 </div>
 
@@ -388,6 +393,18 @@ function openMod(p){document.getElementById('mt').textContent=p.title;document.g
 function closeMod(){document.getElementById('mod').classList.remove('on');}
 document.getElementById('mod').addEventListener('click',e=>{if(e.target===document.getElementById('mod'))closeMod();});
 updatePanel(PROJS[0]);
+
+document.getElementById('pinext').addEventListener('click',()=>{
+  if(traveling) return;
+  closeMod();
+  const cur=(focusOn && focusIdx!==null)?focusIdx:0;
+  const next=(cur+1)%PROJS.length;
+  triggerBH();
+  setFocus(next);
+  updatePanel(PROJS[next]);
+  const dest=planets[next].position.clone().add(new THREE.Vector3(0,.8,0));
+  launchTo(dest,()=>{ orbitCenter.copy(planets[next].position); });
+}, { passive:true });
 
 let mcOn=false;
 function toggleMC(){mcOn=!mcOn;document.getElementById('mc').classList.toggle('on',mcOn);document.getElementById('bmiss').classList.toggle('on',mcOn);}
