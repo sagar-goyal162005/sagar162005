@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/space.html", "destination": "/space.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

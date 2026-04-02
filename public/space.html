@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Sagar • Space Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#00000d;font-family:'Rajdhani',sans-serif;color:#e2e8f0}
+canvas{display:block;position:fixed;inset:0;z-index:0}
+body{cursor:none}
+#cx{position:fixed;pointer-events:none;z-index:9999;transform:translate(-50%,-50%)}
+#cx::before{content:'';display:block;width:4px;height:4px;background:#22d3ee;border-radius:50%}
+#cx-ring{position:fixed;pointer-events:none;z-index:9998;width:26px;height:26px;border:1px solid rgba(34,211,238,.45);border-radius:50%;transform:translate(-50%,-50%);transition:width .2s,height .2s,border-color .2s}
+#cx-ring.h{width:40px;height:40px;border-color:rgba(34,211,238,.9)}
+#vign{position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,8,.85) 100%);pointer-events:none;z-index:1}
+#scanline{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.03) 3px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:2}
+#focus{position:fixed;inset:0;z-index:120;opacity:0;pointer-events:none;background:rgba(0,0,8,0);backdrop-filter:blur(0px);transition:opacity .55s ease,backdrop-filter .55s ease,background .55s ease}
+#focus.on{opacity:1;background:rgba(0,0,8,.6);backdrop-filter:blur(6px)}
+#bh{position:fixed;inset:-25%;z-index:125;opacity:0;pointer-events:none;display:flex;align-items:center;justify-content:center}
+#bh::before{content:'';width:12px;height:12px;border-radius:50%;background:radial-gradient(circle,rgba(0,0,0,1) 0%,rgba(0,0,0,1) 26%,rgba(34,211,238,.35) 42%,rgba(139,92,246,.22) 58%,rgba(0,0,0,0) 72%);transform:scale(0);filter:blur(0px);opacity:1}
+#bh.on{opacity:1}
+#bh.on::before{animation:bh 0.85s cubic-bezier(.2,1,.2,1) forwards}
+@keyframes bh{0%{transform:scale(0);filter:blur(0px);opacity:1}45%{transform:scale(70);filter:blur(0px);opacity:1}100%{transform:scale(130);filter:blur(7px);opacity:0}}
+.cor{position:fixed;width:50px;height:50px;pointer-events:none;z-index:4}
+.cor::before,.cor::after{content:'';position:absolute;background:rgba(34,211,238,.25)}
+.cor.tl{top:12px;left:12px}.cor.tl::before{width:1px;height:100%;top:0;left:0}.cor.tl::after{width:100%;height:1px;top:0;left:0}
+.cor.tr{top:12px;right:12px}.cor.tr::before{width:1px;height:100%;top:0;right:0}.cor.tr::after{width:100%;height:1px;top:0;right:0}
+.cor.bl{bottom:12px;left:12px}.cor.bl::before{width:1px;height:100%;bottom:0;left:0}.cor.bl::after{width:100%;height:1px;bottom:0;left:0}
+.cor.br{bottom:12px;right:12px}.cor.br::before{width:1px;height:100%;bottom:0;right:0}.cor.br::after{width:100%;height:1px;bottom:0;right:0}
+#load{position:fixed;inset:0;background:#00000d;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:3000;transition:opacity 1.4s ease}
+.lt{font-family:'Orbitron',sans-serif;font-size:clamp(2.5rem,7vw,5rem);font-weight:900;letter-spacing:.25em;background:linear-gradient(135deg,#F59E0B,#FF6600,#FF3300);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ls{font-family:'Orbitron',sans-serif;font-size:.58rem;letter-spacing:.45em;color:#1f2937;margin:.4rem 0 2.5rem}
+.lb{width:280px;height:1px;background:#111;overflow:hidden}
+.lf{height:100%;background:linear-gradient(90deg,#7C3AED,#22D3EE,#F59E0B);transform:translateX(-100%);animation:lani 2.6s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes lani{to{transform:translateX(0)}}
+.lm{font-family:'Orbitron',sans-serif;font-size:.52rem;letter-spacing:.22em;color:#1f2937;margin-top:1rem;min-height:1.2em}
+#hud{position:fixed;top:0;left:0;right:0;padding:1.1rem 1.8rem;display:flex;justify-content:space-between;align-items:flex-start;z-index:100;pointer-events:none}
+.hb-name{font-family:'Orbitron',sans-serif;font-size:.85rem;font-weight:700;letter-spacing:.18em;color:#e2e8f0}
+.hb-role{font-family:'Orbitron',sans-serif;font-size:.52rem;letter-spacing:.22em;color:#334155;margin-top:.1rem}
+.hud-r{display:flex;gap:.65rem;pointer-events:all;align-items:center}
+.btn{padding:.42rem 1rem;border:1px solid rgba(139,92,246,.35);background:rgba(139,92,246,.07);color:#A78BFA;border-radius:100px;font-family:'Orbitron',sans-serif;font-size:.52rem;letter-spacing:.12em;cursor:pointer;transition:all .3s;backdrop-filter:blur(14px)}
+.btn:hover,.btn.on{background:rgba(139,92,246,.28);border-color:#A78BFA;color:#fff}
+.btn.alt{border-color:rgba(34,211,238,.35);background:rgba(34,211,238,.07);color:#67E8F9}
+.btn.alt:hover{background:rgba(34,211,238,.2);border-color:#67E8F9;color:#fff}
+#prof{position:fixed;pointer-events:none;z-index:8;transform:translate(-50%,-50%);transition:opacity .5s}
+#prof-ring{position:absolute;width:calc(100% + 22px);height:calc(100% + 22px);border-radius:50%;border:1.5px solid rgba(255,140,0,.5);top:-11px;left:-11px;box-shadow:0 0 20px rgba(255,100,0,.6),0 0 50px rgba(255,60,0,.3);animation:cpulse 3s ease-in-out infinite}
+@keyframes cpulse{0%,100%{box-shadow:0 0 20px rgba(255,100,0,.6),0 0 50px rgba(255,60,0,.3)}50%{box-shadow:0 0 35px rgba(255,140,0,.9),0 0 80px rgba(255,80,0,.5)}}
+#prof-inner{width:66px;height:66px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,160,0,.7)}
+#pimg{width:100%;height:100%;object-fit:cover;display:block}
+#pinit{display:none;width:100%;height:100%;background:radial-gradient(circle at 35% 30%,#FF8C00,#FF3D00);align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:1.6rem;font-weight:900;color:#fff}
+.plbl{position:fixed;pointer-events:none;z-index:50;font-family:'Orbitron',sans-serif;font-size:.46rem;letter-spacing:.18em;transform:translate(-50%,-50%);white-space:nowrap;transition:opacity .4s}
+.plbl span{display:block;padding:.18rem .65rem;border:1px solid;border-radius:3px;backdrop-filter:blur(4px)}
+#tip{position:fixed;pointer-events:none;z-index:200;background:rgba(2,4,20,.92);border:1px solid rgba(139,92,246,.3);border-radius:6px;padding:.38rem .85rem;font-family:'Orbitron',sans-serif;font-size:.56rem;letter-spacing:.1em;color:#A78BFA;opacity:0;transition:opacity .18s;transform:translate(-50%,-140%)}
+#hint{position:fixed;bottom:1.6rem;left:50%;transform:translateX(-50%);font-family:'Orbitron',sans-serif;font-size:.47rem;letter-spacing:.22em;color:rgba(71,85,105,.5);z-index:100;pointer-events:none;white-space:nowrap;text-align:center}
+#tvl{position:fixed;bottom:3.2rem;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:.8rem;background:rgba(0,4,18,.8);border:1px solid rgba(34,211,238,.3);border-radius:100px;padding:.4rem 1.2rem;font-family:'Orbitron',sans-serif;font-size:.52rem;letter-spacing:.18em;color:#22D3EE;z-index:100;pointer-events:none;opacity:0;transition:opacity .4s}
+#tvl.show{opacity:1}
+.tvl-dot{width:5px;height:5px;background:#22D3EE;border-radius:50%;animation:blink .7s infinite alternate}
+@keyframes blink{to{opacity:.2}}
+#radar-wrap{position:fixed;bottom:1.4rem;left:1.8rem;z-index:100;opacity:.82}
+#rdr{border-radius:50%;display:block}
+.rdr-lbl{font-family:'Orbitron',sans-serif;font-size:.45rem;letter-spacing:.18em;color:rgba(34,211,238,.35);text-align:center;margin-top:.35rem}
+#mc{position:fixed;right:1.8rem;top:50%;transform:translateY(-50%) translateX(22px);width:278px;background:linear-gradient(150deg,rgba(4,4,18,.97),rgba(12,4,28,.97));border:1px solid rgba(245,158,11,.22);border-radius:14px;padding:1.6rem;z-index:150;opacity:0;pointer-events:none;transition:all .5s cubic-bezier(.23,1,.32,1);box-shadow:0 0 60px rgba(245,158,11,.05),inset 0 1px 0 rgba(255,255,255,.03)}
+#mc.on{opacity:1;pointer-events:all;transform:translateY(-50%) translateX(0)}
+.mc-hd{font-family:'Orbitron',sans-serif;font-size:.56rem;letter-spacing:.25em;color:#F59E0B;border-bottom:1px solid rgba(245,158,11,.15);padding-bottom:.8rem;margin-bottom:1.3rem;display:flex;align-items:center;gap:.55rem}
+.mc-dot{width:5px;height:5px;background:#F59E0B;border-radius:50%;flex-shrink:0;animation:mcpulse 2s infinite}
+@keyframes mcpulse{0%,100%{opacity:1;box-shadow:0 0 4px #F59E0B}50%{opacity:.3;box-shadow:none}}
+.sk{margin-bottom:1rem}
+.sk-l{font-size:.54rem;letter-spacing:.12em;color:#475569;margin-bottom:.3rem;font-family:'Orbitron',sans-serif}
+.sk-t{height:2px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden;margin-bottom:.22rem}
+.sk-f{height:100%;border-radius:2px}
+.sk-v{font-size:.72rem;color:#94A3B8;font-style:italic}
+.mc-note{border-top:1px solid rgba(245,158,11,.1);padding-top:.9rem;margin-top:.8rem;font-size:.7rem;color:#475569;line-height:1.65;font-style:italic}
+.mc-x{position:absolute;top:.9rem;right:.9rem;background:none;border:none;color:#334155;cursor:pointer;font-size:1rem;transition:color .3s;line-height:1}
+.mc-x:hover{color:#94A3B8}
+#pinfo{position:fixed;left:1.8rem;top:50%;transform:translateY(-50%) translateX(-22px);width:282px;background:linear-gradient(150deg,rgba(4,4,18,.97),rgba(12,4,28,.97));border:1px solid rgba(34,211,238,.22);border-radius:14px;padding:1.55rem;z-index:140;box-shadow:0 0 60px rgba(34,211,238,.08),inset 0 1px 0 rgba(255,255,255,.03);transition:box-shadow .35s ease,border-color .35s ease,transform .6s cubic-bezier(.23,1,.32,1),opacity .6s cubic-bezier(.23,1,.32,1);opacity:0;pointer-events:none}
+#pinfo.on{transform:translateY(-50%) translateX(0);opacity:1;pointer-events:all}
+#pinfo.flash{border-color:rgba(34,211,238,.55);box-shadow:0 0 90px rgba(34,211,238,.22),inset 0 1px 0 rgba(255,255,255,.06)}
+.pi-h{font-family:'Orbitron',sans-serif;font-size:.54rem;letter-spacing:.25em;color:#22D3EE;border-bottom:1px solid rgba(34,211,238,.15);padding-bottom:.6rem;margin-bottom:1rem}
+.pi-t{font-family:'Orbitron',sans-serif;font-size:.92rem;letter-spacing:.08em;margin-bottom:.25rem}
+.pi-s{font-family:'Orbitron',sans-serif;font-size:.52rem;letter-spacing:.22em;margin-bottom:.95rem}
+.pi-d{font-size:.78rem;color:#94A3B8;line-height:1.75;margin-bottom:1rem}
+.pi-tags{display:flex;flex-wrap:wrap;gap:.38rem;margin-bottom:1rem}
+.pi-link{flex:1;padding:.55rem .7rem;text-align:center;border-radius:8px;text-decoration:none;font-family:'Orbitron',sans-serif;font-size:.5rem;letter-spacing:.1em;transition:all .3s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;border:1px solid rgba(255,255,255,.12);color:#e2e8f0}
+.pi-links{display:flex;gap:.6rem}
+.pi-h{font-family:'Orbitron',sans-serif;font-size:.54rem;letter-spacing:.25em;color:#22D3EE;border-bottom:1px solid rgba(34,211,238,.15);padding-bottom:.6rem;margin-bottom:.9rem}
+.pi-t{font-family:'Orbitron',sans-serif;font-size:.9rem;letter-spacing:.08em;margin-bottom:.25rem}
+.pi-s{font-family:'Orbitron',sans-serif;font-size:.52rem;letter-spacing:.22em;margin-bottom:.85rem}
+.pi-d{font-size:.78rem;color:#94A3B8;line-height:1.7;margin-bottom:.9rem}
+.pi-tags{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.9rem}
+.pi-link{flex:1;padding:.5rem .7rem;text-align:center;border-radius:8px;text-decoration:none;font-family:'Orbitron',sans-serif;font-size:.5rem;letter-spacing:.1em;transition:all .3s;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;border:1px solid rgba(255,255,255,.12);color:#e2e8f0}
+.pi-links{display:flex;gap:.5rem}
+#mod{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:400;opacity:0;pointer-events:none;transition:opacity .4s;background:rgba(0,0,8,.65);backdrop-filter:blur(10px)}
+#mod.on{opacity:1;pointer-events:all}
+.mcard{background:linear-gradient(150deg,rgba(4,5,20,.98),rgba(12,5,32,.98));border:1px solid rgba(139,92,246,.18);border-radius:18px;padding:2.4rem;max-width:490px;width:92%;position:relative;box-shadow:0 0 120px rgba(139,92,246,.1),0 50px 100px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.04);transform:scale(.95) translateY(10px);transition:transform .4s cubic-bezier(.23,1,.32,1)}
+#mod.on .mcard{transform:scale(1) translateY(0)}
+.m-orb{width:52px;height:52px;border-radius:50%;margin-bottom:1.3rem}
+.m-t{font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:700;letter-spacing:.06em;margin-bottom:.25rem;line-height:1.2}
+.m-s{font-family:'Orbitron',sans-serif;font-size:.54rem;letter-spacing:.2em;margin-bottom:1.1rem}
+.m-d{font-size:.92rem;color:#94A3B8;line-height:1.8;margin-bottom:1.4rem}
+.m-tags{display:flex;flex-wrap:wrap;gap:.38rem;margin-bottom:1.8rem}
+.m-tag{padding:.2rem .65rem;border-radius:100px;font-family:'Orbitron',sans-serif;font-size:.5rem;letter-spacing:.1em;border:1px solid}
+.m-lnks{display:flex;gap:.7rem}
+.m-lnk{flex:1;padding:.65rem;text-align:center;border-radius:8px;text-decoration:none;font-family:'Orbitron',sans-serif;font-size:.56rem;letter-spacing:.1em;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:.4rem}
+.m-x{position:absolute;top:1.1rem;right:1.1rem;background:none;border:none;color:#2d3748;cursor:pointer;font-size:1.2rem;transition:color .3s;line-height:1}
+.m-x:hover{color:#e2e8f0}
+</style>
+</head>
+<body>
+<div id="vign"></div>
+<div id="scanline"></div>
+<div id="focus" aria-hidden="true"></div>
+<div id="bh" aria-hidden="true"></div>
+<div class="cor tl"></div><div class="cor tr"></div><div class="cor bl"></div><div class="cor br"></div>
+<div id="cx"></div>
+<div id="cx-ring"></div>
+<canvas id="cv"></canvas>
+
+<div id="load">
+  <div class="lt">SAGAR</div>
+  <div class="ls">AI ENGINEER · SPACE PORTFOLIO</div>
+  <div class="lb"><div class="lf"></div></div>
+  <div class="lm" id="lmsg">INITIALIZING UNIVERSE...</div>
+</div>
+
+<div id="hud">
+  <div>
+    <div class="hb-name">⬡&nbsp;&nbsp;SAGAR.SPACE</div>
+    <div class="hb-role">AI ENGINEER · PROMPT ENGINEER · DEVELOPER</div>
+  </div>
+  <div class="hud-r">
+    <button class="btn" id="bmiss" onclick="toggleMC()">⊛&nbsp;MISSION CTRL</button>
+  </div>
+</div>
+
+<div id="prof">
+  <div id="prof-ring"></div>
+  <div id="prof-inner">
+    <img id="pimg" src="/photo.jpeg" alt="Sagar" onerror="this.style.display='none';document.getElementById('pinit').style.display='flex'">
+    <div id="pinit">S</div>
+  </div>
+</div>
+
+<div id="tvl"><div class="tvl-dot"></div>ROCKET IN TRANSIT</div>
+<div id="tip"></div>
+<div id="hint">☉&nbsp;CLICK SUN FOR PROFILE &nbsp;·&nbsp; CLICK PLANETS TO LAUNCH ROCKET &nbsp;·&nbsp; DRAG TO ORBIT</div>
+
+<div id="radar-wrap">
+  <canvas id="rdr" width="140" height="140"></canvas>
+  <div class="rdr-lbl">SOLAR RADAR</div>
+</div>
+
+<div id="mc">
+  <button class="mc-x" onclick="toggleMC()">✕</button>
+  <div class="mc-hd"><div class="mc-dot"></div>MISSION CONTROL</div>
+  <div class="sk"><div class="sk-l">AI ENGINEERING</div><div class="sk-t"><div class="sk-f" style="width:92%;background:linear-gradient(90deg,#6B21A8,#A855F7)"></div></div><div class="sk-v">Prompt Eng · Fine-Tuning · Applied ML</div></div>
+  <div class="sk"><div class="sk-l">BACKEND SYSTEMS</div><div class="sk-t"><div class="sk-f" style="width:78%;background:linear-gradient(90deg,#0E7490,#22D3EE)"></div></div><div class="sk-v">API Design · Architecture · Scalability</div></div>
+  <div class="sk"><div class="sk-l">SECURITY</div><div class="sk-t"><div class="sk-f" style="width:66%;background:linear-gradient(90deg,#991B1B,#EF4444)"></div></div><div class="sk-v">CTF · Nmap · Vulnerability Analysis</div></div>
+  <div class="sk"><div class="sk-l">ADAPTABILITY</div><div class="sk-t"><div class="sk-f" style="width:96%;background:linear-gradient(90deg,#065F46,#10B981)"></div></div><div class="sk-v">Rapid Learning · Cross-domain Thinking</div></div>
+  <div class="mc-note"><span style="font-family:'Orbitron',sans-serif;font-size:.5rem;letter-spacing:.2em;color:#374151">MISSION OBJECTIVE</span><br><br>Building scalable, production-ready AI systems that solve real-world problems with clean, maintainable architecture.</div>
+</div>
+
+<div id="pinfo">
+  <div class="pi-h">PROJECT HUD</div>
+  <div class="pi-t" id="pit"></div>
+  <div class="pi-s" id="pis"></div>
+  <div class="pi-d" id="pid"></div>
+  <div class="pi-tags" id="pitags"></div>
+  <div class="pi-links">
+    <a id="pidemo" class="pi-link" target="_blank" rel="noreferrer">LIVE DEMO</a>
+    <a id="pigithub" class="pi-link" target="_blank" rel="noreferrer">GITHUB</a>
+  </div>
+</div>
+
+<div id="mod">
+  <div class="mcard">
+    <button class="m-x" onclick="closeMod()">✕</button>
+    <div id="morb" class="m-orb"></div>
+    <div class="m-t" id="mt"></div>
+    <div class="m-s" id="ms"></div>
+    <div class="m-d" id="md"></div>
+    <div class="m-tags" id="mtags"></div>
+    <div class="m-lnks">
+      <a id="mdemo" href="#" target="_blank" rel="noreferrer" class="m-lnk" style="background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);color:#A78BFA">🚀&nbsp;LIVE DEMO</a>
+      <a id="mgit" href="#" target="_blank" rel="noreferrer" class="m-lnk" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);color:#475569">⬡&nbsp;GITHUB</a>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+'use strict';
+const PROJS=[
+  {title:'IP Port Scanner',sub:'NETWORKING · SECURITY TOOL',desc:'Nmap-based IP/Port scanning tool for fast network reconnaissance.',tags:['Python','Nmap','Networking'],color:0x22D3EE,css:'#22D3EE',orbit:6.2,speed:.00052,phase:0,shape:'icosahedron',size:1.0,demo:'',github:'https://github.com/sagar-goyal162005/IP-Address-Port-Scanner-Using-Nmap-.git'},
+  {title:'AI Rockfall',sub:'AI + SAFETY SYSTEMS',desc:'Predictive AI system to forecast rockfall risks with data-driven modeling.',tags:['Python','ML','Data Analysis'],color:0xA855F7,css:'#A855F7',orbit:9.4,speed:.00036,phase:Math.PI*.55,shape:'octahedron',size:1.05,demo:'',github:'https://github.com/sagar-goyal162005/AI-Rockfall-Prediction-system.git'},
+  {title:'Swasth AI',sub:'HEALTHCARE · AI ASSISTANT',desc:'AI-powered health assistant built for smarter, guided wellness support.',tags:['React','AI','Healthcare'],color:0x22C55E,css:'#22C55E',orbit:12.8,speed:.00024,phase:Math.PI*1.1,shape:'sphere_ringed',size:1.2,demo:'https://swasth-ai-ten.vercel.app',github:''},
+  {title:'ChainSense AI',sub:'WEB3 · FINANCE INTELLIGENCE',desc:'Autonomous Web3 expense management assistant with smart analysis workflows.',tags:['Web3','AI','Automation'],color:0x3B82F6,css:'#3B82F6',orbit:16.5,speed:.00018,phase:Math.PI*1.65,shape:'torusknot',size:.9,demo:'https://chainsense-ai-autonomous-web3-expense-mepp.onrender.com/',github:''},
+  {title:'Intent Watch',sub:'CYBERSECURITY · INTENT MONITORING',desc:'Security-focused project exploring intent monitoring and suspicious behavior analysis.',tags:['Python','Security','Automation'],color:0xF97316,css:'#F97316',orbit:20.5,speed:.00012,phase:Math.PI*2.1,shape:'icosahedron',size:.95,demo:'',github:'https://github.com/sagar-goyal162005/intent-watch.git'},
+];
+
+const cv=document.getElementById('cv');
+const W=()=>innerWidth,H=()=>innerHeight;
+const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2.5));
+renderer.setSize(W(),H());
+renderer.setClearColor(0x00000d);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(50,W()/H(),.1,2000);
+camera.position.set(0,10,26);
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;controls.dampingFactor=.055;controls.minDistance=5;controls.maxDistance=75;controls.maxPolarAngle=Math.PI*.87;controls.autoRotate=true;controls.autoRotateSpeed=.12;
+
+scene.add(new THREE.AmbientLight(0x080818,1.2));
+const sunLt=new THREE.PointLight(0xFFAA33,5,90);scene.add(sunLt);
+const rimA=new THREE.PointLight(0x2244FF,.55,200);rimA.position.set(-50,30,-40);scene.add(rimA);
+const rimB=new THREE.PointLight(0xFF2266,.25,200);rimB.position.set(60,-20,30);scene.add(rimB);
+
+function glowCanvas(hex,blur=.6){
+  const c=document.createElement('canvas');c.width=c.height=256;
+  const x=c.getContext('2d'),g=x.createRadialGradient(128,128,0,128,128,128);
+  g.addColorStop(0,hex+'ff');g.addColorStop(blur,hex+'66');g.addColorStop(1,hex+'00');
+  x.fillStyle=g;x.fillRect(0,0,256,256);return new THREE.CanvasTexture(c);
+}
+function spr(hex,sc,parent,off=[0,0,0]){
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:glowCanvas(hex),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));
+  s.scale.setScalar(sc);s.position.set(...off);parent.add(s);return s;
+}
+
+function mkStars(n,spread,sz,tint=1){
+  const g=new THREE.BufferGeometry(),p=new Float32Array(n*3),c=new Float32Array(n*3);
+  for(let i=0;i<n;i++){p[i*3]=(Math.random()-.5)*spread;p[i*3+1]=(Math.random()-.5)*spread;p[i*3+2]=(Math.random()-.5)*spread;const b=tint*(.6+Math.random()*.4);c[i*3]=b*.95;c[i*3+1]=b*.92;c[i*3+2]=b;}
+  g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(c,3));
+  scene.add(new THREE.Points(g,new THREE.PointsMaterial({size:sz,vertexColors:true,sizeAttenuation:true})));
+}
+mkStars(8000,900,.24);mkStars(3200,400,.1,.7);mkStars(1500,150,.06,.5);
+
+// Warp streaks (camera-relative lines; fades in during travel)
+let warpMix=0;
+const warpCount=900,warpSpread=70;
+const warpBase=new Float32Array(warpCount*3);
+for(let i=0;i<warpCount;i++){
+  warpBase[i*3]=(Math.random()-.5)*warpSpread;
+  warpBase[i*3+1]=(Math.random()-.5)*warpSpread*.55;
+  warpBase[i*3+2]=8+Math.random()*warpSpread;
+}
+const warpPos=new Float32Array(warpCount*2*3);
+const warpGeo=new THREE.BufferGeometry();
+warpGeo.setAttribute('position',new THREE.Float32BufferAttribute(warpPos,3));
+const warpMat=new THREE.LineBasicMaterial({color:0x88ccff,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});
+const warpLines=new THREE.LineSegments(warpGeo,warpMat);
+warpLines.frustumCulled=false;
+warpLines.visible=false;
+scene.add(warpLines);
+const _wf=new THREE.Vector3(),_wr=new THREE.Vector3(),_wu=new THREE.Vector3(),_ws=new THREE.Vector3(),_we=new THREE.Vector3();
+
+// Nebulae
+[{c:'#2a1060',x:-90,y:35,z:-130,s:110,o:.5},{c:'#0a1e5a',x:110,y:-15,z:-110,s:95,o:.45},{c:'#0f0630',x:10,y:55,z:-180,s:130,o:.55},{c:'#051a10',x:-50,y:-45,z:-70,s:70,o:.4},{c:'#1a0520',x:70,y:40,z:-90,s:80,o:.35}].forEach(n=>{
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:glowCanvas(n.c,.7),transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:n.o}));
+  s.position.set(n.x,n.y,n.z);s.scale.setScalar(n.s);scene.add(s);
+});
+
+// Sun with profile texture
+const sunGrp=new THREE.Group();scene.add(sunGrp);
+const texLoader=new THREE.TextureLoader();
+const sunMat=new THREE.MeshStandardMaterial({color:0xFF8800,emissive:0xFF5500,emissiveIntensity:1.1,roughness:.9,metalness:0});
+texLoader.load('/photo.jpeg',tex=>{sunMat.map=tex;sunMat.needsUpdate=true;});
+const sunMesh=new THREE.Mesh(new THREE.SphereGeometry(2.3,64,64),sunMat);
+sunGrp.add(sunMesh);spr('#FF8800',16,sunGrp);spr('#FF5500',9,sunGrp);spr('#FFCC44',5,sunGrp);
+for(let i=0;i<4;i++){const r=new THREE.Mesh(new THREE.TorusGeometry(2.9+i*.55,.016,8,128),new THREE.MeshBasicMaterial({color:0xFF6600,transparent:true,opacity:.07-i*.015}));r.rotation.set(Math.PI/2+(Math.random()-.5)*.5,Math.random()*Math.PI,0);sunGrp.add(r);}
+
+// Orbits
+PROJS.forEach(p=>{const m=new THREE.Mesh(new THREE.TorusGeometry(p.orbit,.016,8,512),new THREE.MeshBasicMaterial({color:0x1a2a3a,transparent:true,opacity:.22}));m.rotation.x=Math.PI/2;scene.add(m);});
+
+// Planets
+const planets=[],pAngles=PROJS.map(p=>p.phase),pLabels=[];
+PROJS.forEach((p,i)=>{
+  const grp=new THREE.Group();
+  const mat=new THREE.MeshStandardMaterial({color:p.color,emissive:p.color,emissiveIntensity:.38,roughness:.42,metalness:.18});
+  let mesh;
+  if(p.shape==='icosahedron'){
+    mesh=new THREE.Mesh(new THREE.IcosahedronGeometry(p.size,0),mat);
+  } else if(p.shape==='octahedron'){
+    mesh=new THREE.Mesh(new THREE.OctahedronGeometry(p.size,0),mat);
+  } else if(p.shape==='sphere_ringed'){
+    mesh=new THREE.Mesh(new THREE.SphereGeometry(p.size,48,48),mat);
+    const rMat=new THREE.MeshStandardMaterial({color:p.color,emissive:p.color,emissiveIntensity:.2,transparent:true,opacity:.38,side:THREE.DoubleSide});
+    [[p.size*1.75,.22,Math.PI*.32],[p.size*2.1,.1,Math.PI*.32]].forEach(([r,t,rx])=>{const ring=new THREE.Mesh(new THREE.TorusGeometry(r,t,8,128),rMat);ring.rotation.x=rx;grp.add(ring);});
+  } else if(p.shape==='torusknot'){
+    mesh=new THREE.Mesh(new THREE.TorusKnotGeometry(p.size*.72,.2,128,16,2,3),mat);
+  }
+  if(mesh){mesh.userData.selectable=true;grp.add(mesh);}
+  grp.userData={p,idx:i,mesh:mesh||grp.children[0]};
+  spr(p.css,p.size*4.8,grp);spr(p.css,p.size*2.8,grp);
+  const pl=new THREE.PointLight(p.color,.55,p.size*12);grp.add(pl);
+  grp.position.x=Math.cos(pAngles[i])*p.orbit;grp.position.z=Math.sin(pAngles[i])*p.orbit;
+  scene.add(grp);planets.push(grp);
+  const div=document.createElement('div');div.className='plbl';
+  div.innerHTML=`<span style="color:${p.css};border-color:${p.css}44;background:rgba(0,0,0,.5)">${p.title.toUpperCase()}</span>`;
+  document.body.appendChild(div);pLabels.push(div);
+});
+
+// Rocket (image sprite)
+const rkt=new THREE.Group();scene.add(rkt);
+const rTex=texLoader.load('/rocket.webp');
+if('colorSpace' in rTex && THREE.SRGBColorSpace) rTex.colorSpace=THREE.SRGBColorSpace;
+else if('encoding' in rTex && THREE.sRGBEncoding) rTex.encoding=THREE.sRGBEncoding;
+const rSpr=new THREE.Sprite(new THREE.SpriteMaterial({map:rTex,transparent:true,depthWrite:false}));
+rSpr.scale.set(2.2,2.2,1);
+rSpr.position.set(0,0.2,0);
+rkt.add(rSpr);
+const exGlow1=spr('#4488FF',1.7,rkt,[0,-0.9,0]);
+const exGlow2=spr('#FF6600',.7,rkt,[0,-0.78,0]);
+
+const TRAIL=120,tPos=new Float32Array(TRAIL*3),tGeo=new THREE.BufferGeometry();
+tGeo.setAttribute('position',new THREE.Float32BufferAttribute(tPos,3));
+scene.add(new THREE.Points(tGeo,new THREE.PointsMaterial({size:.13,color:0x5599FF,transparent:true,opacity:.7,blending:THREE.AdditiveBlending,depthWrite:false})));
+const trailHist=[],_tv=new THREE.Vector3();
+function updateTrail(){_tv.set(0,-1.25,0);rkt.localToWorld(_tv);trailHist.unshift(_tv.clone());if(trailHist.length>TRAIL)trailHist.pop();for(let i=0;i<TRAIL;i++){if(i<trailHist.length){tPos[i*3]=trailHist[i].x;tPos[i*3+1]=trailHist[i].y;tPos[i*3+2]=trailHist[i].z;}else{tPos[i*3]=0;tPos[i*3+1]=9999;tPos[i*3+2]=0;}}tGeo.attributes.position.needsUpdate=true;}
+
+rkt.position.set(3.5,0,0);
+let rktAng=0,rktRad=3.5,traveling=false,tProg=0;
+let orbitCenter=new THREE.Vector3(0,0,0);
+const ORBIT_SUN_RAD=3.5;
+const ORBIT_PLANET_RAD=1.55;
+const ORBIT_SUN_SPEED=0.013;
+const ORBIT_PLANET_SPEED=0.0062;
+const tS=new THREE.Vector3(),tM=new THREE.Vector3(),tE=new THREE.Vector3();
+let afterLand=null;const _n=new THREE.Vector3();
+function launchTo(dest,cb){if(traveling)return;traveling=true;tProg=0;tS.copy(rkt.position);tE.copy(dest);tM.set((tS.x+tE.x)/2,Math.max(tS.y,tE.y)+5.5+Math.random()*2,(tS.z+tE.z)/2);afterLand=cb;document.getElementById('tvl').classList.add('show');controls.autoRotate=false;}
+
+// Raycaster
+const ray=new THREE.Raycaster(),mpos=new THREE.Vector2(),tip=document.getElementById('tip');
+function castRay(ex,ey){mpos.x=(ex/W())*2-1;mpos.y=-(ey/H())*2+1;ray.setFromCamera(mpos,camera);if(ray.intersectObject(sunMesh).length)return'sun';for(let i=0;i<planets.length;i++){if(ray.intersectObjects(planets[i].children,true).length)return i;}return null;}
+const focusEl=document.getElementById('focus');
+const bhEl=document.getElementById('bh');
+const pinfoEl=document.getElementById('pinfo');
+let focusIdx=null;
+let focusOn=false;
+
+function triggerBH(){bhEl.classList.remove('on');void bhEl.offsetHeight;bhEl.classList.add('on');setTimeout(()=>bhEl.classList.remove('on'),900);}
+
+function setFocus(i){focusIdx=i;focusOn=true;focusEl.classList.add('on');pinfoEl.classList.add('on');controls.autoRotate=false;orbitCenter.copy(planets[i].position);}
+function clearFocus(){focusOn=false;focusIdx=null;focusEl.classList.remove('on');pinfoEl.classList.remove('on');orbitCenter.set(0,0,0);if(!traveling)controls.autoRotate=true;}
+
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMod();clearFocus();}}, { passive:true });
+
+window.addEventListener('click',e=>{
+  if(e.target!==cv)return;
+  const h=castRay(e.clientX,e.clientY);
+  if(h==='sun'){toggleMC();return;}
+  if(typeof h==='number'){
+    if(focusOn && focusIdx===h && !traveling){openMod(PROJS[h]);return;}
+    if(!traveling)triggerBH();
+    setFocus(h);
+    updatePanel(PROJS[h]);
+    const dest=planets[h].position.clone().add(new THREE.Vector3(0,.8,0));
+    launchTo(dest,()=>{ orbitCenter.copy(planets[h].position); /* panel already open */ });
+    return;
+  }
+  if(focusOn && !traveling){clearFocus();}
+});
+window.addEventListener('mousemove',e=>{document.getElementById('cx').style.cssText+=`;left:${e.clientX}px;top:${e.clientY}px`;document.getElementById('cx-ring').style.cssText+=`;left:${e.clientX}px;top:${e.clientY}px`;tip.style.left=e.clientX+'px';tip.style.top=e.clientY+'px';const h=castRay(e.clientX,e.clientY);if(h==='sun'){tip.textContent='SAGAR — AI Engineer · Click to view profile';tip.style.opacity='1';document.getElementById('cx-ring').classList.add('h');}else if(typeof h==='number'){tip.textContent=PROJS[h].title+' — Click to launch rocket';tip.style.opacity='1';document.getElementById('cx-ring').classList.add('h');}else{tip.style.opacity='0';document.getElementById('cx-ring').classList.remove('h');}});
+
+function toggleLink(el,url){if(!url){el.style.display='none';return;}el.style.display='inline-flex';el.setAttribute('href',url);}
+function updatePanel(p){const panel=document.getElementById('pinfo');document.getElementById('pit').textContent=p.title;document.getElementById('pis').textContent=p.sub;document.getElementById('pis').style.color=p.css;document.getElementById('pid').textContent=p.desc;document.getElementById('pitags').innerHTML=p.tags.map(t=>`<span class="m-tag" style="color:${p.css};border-color:${p.css}44">${t}</span>`).join('');toggleLink(document.getElementById('pidemo'),p.demo);toggleLink(document.getElementById('pigithub'),p.github);panel.classList.remove('flash');void panel.offsetHeight;panel.classList.add('flash');setTimeout(()=>panel.classList.remove('flash'),420);}
+function openMod(p){document.getElementById('mt').textContent=p.title;document.getElementById('ms').textContent=p.sub;document.getElementById('ms').style.color=p.css;document.getElementById('md').textContent=p.desc;toggleLink(document.getElementById('mdemo'),p.demo);toggleLink(document.getElementById('mgit'),p.github);const orb=document.getElementById('morb');orb.style.cssText+=`;background:radial-gradient(circle at 35% 30%,${p.css}55,${p.css}11);box-shadow:0 0 28px ${p.css}66;border:1px solid ${p.css}44`;document.getElementById('mtags').innerHTML=p.tags.map(t=>`<span class="m-tag" style="color:${p.css};border-color:${p.css}44">${t}</span>`).join('');document.getElementById('mod').classList.add('on');}
+function closeMod(){document.getElementById('mod').classList.remove('on');}
+document.getElementById('mod').addEventListener('click',e=>{if(e.target===document.getElementById('mod'))closeMod();});
+updatePanel(PROJS[0]);
+
+let mcOn=false;
+function toggleMC(){mcOn=!mcOn;document.getElementById('mc').classList.toggle('on',mcOn);document.getElementById('bmiss').classList.toggle('on',mcOn);}
+
+const rdrCv=document.getElementById('rdr'),rdrCtx=rdrCv.getContext('2d'),RC=70,RW=140;
+function drawRadar(t){const cx=RW/2,cy=RW/2;rdrCtx.clearRect(0,0,RW,RW);rdrCtx.save();rdrCtx.beginPath();rdrCtx.arc(cx,cy,RC,0,Math.PI*2);rdrCtx.clip();rdrCtx.fillStyle='rgba(0,3,12,.92)';rdrCtx.fillRect(0,0,RW,RW);[.33,.66,1].forEach(f=>{rdrCtx.strokeStyle=`rgba(34,211,238,${f===1?.22:.09})`;rdrCtx.lineWidth=.5;rdrCtx.beginPath();rdrCtx.arc(cx,cy,RC*f,0,Math.PI*2);rdrCtx.stroke();});rdrCtx.strokeStyle='rgba(34,211,238,.07)';rdrCtx.lineWidth=.5;[[cx,cy-RC,cx,cy+RC],[cx-RC,cy,cx+RC,cy]].forEach(([x1,y1,x2,y2])=>{rdrCtx.beginPath();rdrCtx.moveTo(x1,y1);rdrCtx.lineTo(x2,y2);rdrCtx.stroke();});const sw=t*.8%(Math.PI*2);rdrCtx.strokeStyle='rgba(34,211,238,.6)';rdrCtx.lineWidth=1.2;rdrCtx.beginPath();rdrCtx.moveTo(cx,cy);rdrCtx.lineTo(cx+Math.cos(sw)*RC,cy+Math.sin(sw)*RC);rdrCtx.stroke();rdrCtx.fillStyle='rgba(34,211,238,.03)';rdrCtx.beginPath();rdrCtx.moveTo(cx,cy);rdrCtx.arc(cx,cy,RC,sw-1.4,sw,false);rdrCtx.closePath();rdrCtx.fill();const scale=RC/22;rdrCtx.shadowColor='#F59E0B';rdrCtx.shadowBlur=10;rdrCtx.fillStyle='#F59E0B';rdrCtx.beginPath();rdrCtx.arc(cx,cy,4.5,0,Math.PI*2);rdrCtx.fill();rdrCtx.shadowBlur=0;PROJS.forEach((p,i)=>{const px=cx+planets[i].position.x*scale,py=cy+planets[i].position.z*scale;rdrCtx.shadowColor=p.css;rdrCtx.shadowBlur=7;rdrCtx.fillStyle=p.css;rdrCtx.beginPath();rdrCtx.arc(px,py,3,0,Math.PI*2);rdrCtx.fill();});rdrCtx.shadowBlur=0;const rx=cx+rkt.position.x*scale,ry=cy+rkt.position.z*scale;rdrCtx.shadowColor='#88AAFF';rdrCtx.shadowBlur=8;rdrCtx.fillStyle='#fff';rdrCtx.beginPath();rdrCtx.arc(rx,ry,2.2,0,Math.PI*2);rdrCtx.fill();rdrCtx.shadowBlur=0;rdrCtx.restore();rdrCtx.strokeStyle='rgba(34,211,238,.28)';rdrCtx.lineWidth=1;rdrCtx.beginPath();rdrCtx.arc(cx,cy,RC,0,Math.PI*2);rdrCtx.stroke();}
+
+const profEl=document.getElementById('prof'),_sv=new THREE.Vector3();
+function updateProfile(){_sv.copy(sunGrp.position).project(camera);if(_sv.z<1){profEl.style.left=((_sv.x+1)/2*W())+'px';profEl.style.top=((-_sv.y+1)/2*H())+'px';profEl.style.opacity='1';}else profEl.style.opacity='0';}
+function updateLabels(){planets.forEach((pg,i)=>{_sv.copy(pg.position).project(camera);if(_sv.z<1){pLabels[i].style.left=((_sv.x+1)/2*W())+'px';pLabels[i].style.top=(((-_sv.y+1)/2*H())-52)+'px';pLabels[i].style.opacity='1';}else pLabels[i].style.opacity='0';});}
+
+const clk=new THREE.Clock();
+const _tmpV=new THREE.Vector3();
+const _tmpV2=new THREE.Vector3();
+const _tmpScale=new THREE.Vector3();
+const ORBIT_SPEED_MULT=2.2;
+const ORBIT_BOB_Y=0.22;
+(function animate(){
+  requestAnimationFrame(animate);
+  const dt=clk.getDelta();
+  const t=clk.elapsedTime;
+
+  sunMesh.rotation.y+=.002;sunGrp.scale.setScalar(1+Math.sin(t*1.9)*.022);
+  PROJS.forEach((p,i)=>{
+    // Convert the authored per-frame speeds to time-based so orbit motion is consistent and more visible.
+    // (The original values were tuned around ~60fps.)
+    pAngles[i]+=p.speed*(dt*60)*ORBIT_SPEED_MULT;
+    planets[i].position.x=Math.cos(pAngles[i])*p.orbit;
+    planets[i].position.z=Math.sin(pAngles[i])*p.orbit;
+    planets[i].position.y=Math.sin(pAngles[i]*1.7 + i*0.6)*ORBIT_BOB_Y;
+
+    const ms=planets[i].userData.mesh;
+    if(ms){
+      ms.rotation.y+=.007;
+      if(p.shape!=='sphere_ringed')ms.rotation.x+=.003;
+    }
+  });
+
+  // Warp mix + geometry update
+  const warpTarget=traveling?1:0;
+  warpMix+= (warpTarget-warpMix)*0.08;
+  warpLines.visible=warpMix>0.02;
+  warpMat.opacity=0.65*warpMix;
+  if(warpLines.visible){
+    camera.getWorldDirection(_wf).normalize();
+    _wr.crossVectors(_wf,camera.up).normalize();
+    _wu.crossVectors(_wr,_wf).normalize();
+    const lenBase=18*warpMix;
+    const speed=(45*warpMix+2);
+    for(let i=0;i<warpCount;i++){
+      const bi=i*3;
+      const bx=warpBase[bi],by=warpBase[bi+1];
+      let bz=warpBase[bi+2]-dt*speed;
+      if(bz<6)bz=warpSpread+6;
+      warpBase[bi+2]=bz;
+      _ws.copy(camera.position).addScaledVector(_wr,bx).addScaledVector(_wu,by).addScaledVector(_wf,bz);
+      _we.copy(_ws).addScaledVector(_wf,(lenBase*(0.6+bz/warpSpread))+6*warpMix);
+      const pi=i*6;
+      warpPos[pi]=_ws.x;warpPos[pi+1]=_ws.y;warpPos[pi+2]=_ws.z;
+      warpPos[pi+3]=_we.x;warpPos[pi+4]=_we.y;warpPos[pi+5]=_we.z;
+    }
+    warpGeo.attributes.position.needsUpdate=true;
+  }
+
+  if(!traveling){
+    // Orbit rocket around sun (idle) or focused planet (cinematic)
+    const planetOrbit=(focusOn && focusIdx!==null);
+    if(planetOrbit){orbitCenter.copy(planets[focusIdx].position);}else{orbitCenter.set(0,0,0);}
+    const sp=planetOrbit?ORBIT_PLANET_SPEED:ORBIT_SUN_SPEED;
+    const radTarget=planetOrbit?ORBIT_PLANET_RAD:ORBIT_SUN_RAD;
+    rktRad+= (radTarget - rktRad) * 0.08;
+    rktAng+=sp;
+    rkt.position.x=orbitCenter.x+Math.cos(rktAng)*rktRad;
+    rkt.position.z=orbitCenter.z+Math.sin(rktAng)*rktRad;
+    rkt.position.y=orbitCenter.y+Math.sin(t*.65)*.38;
+
+    // Face direction of travel around the orbit
+    const tangX=-Math.sin(rktAng);
+    const tangZ=Math.cos(rktAng);
+    _tmpV.set(tangX,0,tangZ).normalize();
+    rkt.lookAt(rkt.position.clone().add(_tmpV));
+  }
+  else{
+    tProg=Math.min(tProg+.0065,1);const u=tProg,iv=1-u;
+    rkt.position.x=iv*iv*tS.x+2*iv*u*tM.x+u*u*tE.x;
+    rkt.position.y=iv*iv*tS.y+2*iv*u*tM.y+u*u*tE.y;
+    rkt.position.z=iv*iv*tS.z+2*iv*u*tM.z+u*u*tE.z;
+
+    if(tProg<.993){
+      const nu=Math.min(u+.013,1),niv=1-nu;
+      _n.set(
+        niv*niv*tS.x+2*niv*nu*tM.x+nu*nu*tE.x-rkt.position.x,
+        niv*niv*tS.y+2*niv*nu*tM.y+nu*nu*tE.y-rkt.position.y,
+        niv*niv*tS.z+2*niv*nu*tM.z+nu*nu*tE.z-rkt.position.z
+      ).normalize();
+      rkt.lookAt(rkt.position.clone().add(_n));
+    }
+
+    // Cinematic camera follow during travel
+    controls.enabled=false;
+    _tmpV.copy(_n).multiplyScalar(-7);
+    _tmpV2.set(0,2.6,0);
+    camera.position.lerp(rkt.position.clone().add(_tmpV).add(_tmpV2),0.06);
+    camera.lookAt(rkt.position);
+
+    if(tProg>=1){
+      traveling=false;
+      controls.enabled=true;
+      document.getElementById('tvl').classList.remove('show');
+      if(!focusOn)controls.autoRotate=true;
+
+      if(afterLand){afterLand();afterLand=null;}
+
+      // Recompute orbit angle relative to current orbit center (planet vs sun)
+      if(focusOn && focusIdx!==null){orbitCenter.copy(planets[focusIdx].position);}else{orbitCenter.set(0,0,0);}
+      rktAng=Math.atan2(rkt.position.z-orbitCenter.z,rkt.position.x-orbitCenter.x);
+      rktRad=Math.max(0.9,Math.hypot(rkt.position.x-orbitCenter.x,rkt.position.z-orbitCenter.z));
+    }
+  }
+
+  // Focus mode: planet zoom + camera lock
+  for(let i=0;i<planets.length;i++){
+    const s=(focusOn && focusIdx===i)?1.38:1;
+    _tmpScale.set(s,s,s);
+    planets[i].scale.lerp(_tmpScale,0.08);
+  }
+
+  if(focusOn && focusIdx!==null && !traveling){
+    const tp=planets[focusIdx].position;
+    camera.position.lerp(tp.clone().add(new THREE.Vector3(2.2,2.6,6.4)),0.045);
+    controls.target.lerp(tp,0.07);
+    camera.lookAt(controls.target);
+  }
+
+  const ep=1+Math.sin(t*9)*.38;exGlow1.scale.setScalar(ep*2.2);exGlow2.scale.setScalar(ep);
+  updateTrail();updateProfile();updateLabels();drawRadar(t);
+  controls.update();renderer.render(scene,camera);
+})();
+
+window.addEventListener('resize',()=>{camera.aspect=W()/H();camera.updateProjectionMatrix();renderer.setSize(W(),H());});
+
+const msgs=['INITIALIZING UNIVERSE...','PLOTTING ORBITAL MECHANICS...','LOADING PROJECT MANIFESTS...','FUELING ROCKET SYSTEMS...','CALIBRATING RADAR...','LAUNCH SEQUENCE READY ✓'];
+const lmsg=document.getElementById('lmsg');let mi=0;
+const li=setInterval(()=>{if(++mi<msgs.length)lmsg.textContent=msgs[mi];else clearInterval(li);},480);
+setTimeout(()=>{const l=document.getElementById('load');l.style.opacity='0';l.style.pointerEvents='none';setTimeout(()=>l.remove(),1400);},3000);
+</script>
+</body>
+</html>
